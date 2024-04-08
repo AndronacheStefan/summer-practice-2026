@@ -12,7 +12,6 @@ body {
 
 .app {
   height: 100%;
-  padding: 0 2rem;
   display: flex;
   position: relative;
   
@@ -57,4 +56,58 @@ body {
   align-items: center;
   place-items: center;
   text-align: center;
+}
+
+.sidebar {
+  height: 100vh;
+  background-color: darkgray;
+  border-right: 2px solid #ccc !important;
+}
+
+
+
+.welcome {
+  background-color: #AAEAAA;
+  width: calc(100vw - 280px);
+  background-size: cover !important;
+  min-height: 50px !important;
+  height: 14rem !important;
+  background-position-y: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4rem;
+}
+
+.welcome-text {
+  font-size: xxx-large;
+  color: #001135;
+}
+
+.steps {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 3rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+
+.step-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.step-title {
+  font-size: large;
+  font-weight: bold;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.step-description {
+  margin-top: 0.5rem;
+  width: 20rem;
+  text-align: justify;
 }

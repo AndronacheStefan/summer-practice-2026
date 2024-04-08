@@ -22,8 +22,8 @@ const NavSidebar = () => {
 
   return (
     <div>
-      <Sidebar style={{height: "90vh"}}>
-      <Menu>
+      <Sidebar className='sidebar'>
+      <Menu style={{marginTop: "2rem"}}>
         <MenuItem icon={<Home />} onClick={() => navigate("/home")}>Home</MenuItem>
         <MenuItem icon={<CellTowerIcon />} onClick={() => navigate("/devices")}>Devices </MenuItem>
         <MenuItem icon={<BarChartIcon />}  onClick={() => navigate("/dashboard")}>Dashboard </MenuItem>
@@ -35,8 +35,7 @@ const NavSidebar = () => {
         </div>}
         
       </Menu>
-      {/* <button onClick={() => handleToggleSidebar()}>Toggle Sidebar</button> */}
-      <Button variant="outlined" startIcon={<LogoutIcon />} onClick={() => logoutUser()} style={{position: "absolute", bottom: 0}}>
+      <Button variant="outlined" startIcon={<LogoutIcon />} onClick={() => logoutUser()} style={{position: "absolute", bottom: "2rem", left: "1rem"}}>
         Logout
       </Button>
       </Sidebar>
