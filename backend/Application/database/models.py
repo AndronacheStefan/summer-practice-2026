@@ -30,15 +30,14 @@ class Device(Document):
     # snmp
     readCommunity = db.StringField(Required=True)
     writeCommunity = db.StringField(Required=True)
-
+    powerOffTime = StringField(required=True)
+    powerOnTime = StringField(required=True)
+    midCycle = db.BooleanField() # true if awaits power on
 
 class Scheduler(Document):
     deviceSlNo = StringField(required=True, unique=True)
-    powerOffTime = StringField(required=True)
-    powerOnTime = StringField(required=True)
     powerOffDays = db.ListField(Required=True)
     powerOnDays = db.ListField(Required=True)
-    midCycle = db.BooleanField() # true if awaits power on
 
 class DailySaving(db.EmbeddedDocument):
     subId = db.ObjectIdField(required=True, default=lambda: ObjectId())

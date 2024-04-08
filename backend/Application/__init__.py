@@ -4,8 +4,9 @@ from .database.db import initialize_db
 from flask_cors import CORS
 import configparser
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
+from datetime import datetime, timedelta
 import time
+from .scripts.toggle import power_off_devices, power_on_devices
 
 secret = configparser.ConfigParser()
 secret.read('Application/scripts/config.ini') 
@@ -18,12 +19,12 @@ app.config['MONGODB_SETTINGS'] = {
 initialize_db(app)
 CORS(app)
 
-def print_date_time():
-    print(time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
-
 
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(print_date_time,'interval',hours=1)
+sched.add_job(power_off_devices,'interval',hours=1)
+next_run_time = datetime.now() + timedelta(hours=1, minutes=5)
+sched.add_job(power_on_devices,'interval',hours=1, next_run_time=next_run_time)
+
 sched.start()
 
 from .routes.users import app
