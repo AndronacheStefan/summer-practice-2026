@@ -58,9 +58,15 @@ def login():
     user = User.objects(username=username).first()
     if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         access_token = create_access_token(identity=str(username))
-        return make_response(jsonify({'access_token' : access_token,"message": "Login Successfull","loggedinUser": username}), 200)
+        return {
+            'access_token': access_token,
+            'message': 'Login Successfull',
+            'loggedinUser': username,
+            'role': user.role,
+            'group': user.group,
+        }
     else:
-        return jsonify({'message': 'Invalid credentials'}), 401
+        return {'message': 'Invalid credentials'}, 401
     
 
 @app.route('/register', methods=['POST'])

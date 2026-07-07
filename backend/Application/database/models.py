@@ -4,6 +4,9 @@ from mongoengine import *
 class User(Document):
     username = StringField(required=True, unique=True)
     password = StringField(required=True)
+    role = StringField(required=True, choices=['admin', 'user'])
+    site = StringField(required=False)
+    group = StringField(required=False)
 
 class Device(Document):
     deviceName = StringField(required=True, unique=True)
