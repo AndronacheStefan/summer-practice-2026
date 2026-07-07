@@ -62,6 +62,7 @@ def login():
             'access_token': access_token,
             'message': 'Login Successfull',
             'loggedinUser': username,
+            'name': user.name or username,
             'role': user.role,
             'group': user.group,
         }
@@ -72,10 +73,21 @@ def login():
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
+    name = data.get('name')
     username = data.get('username')
     password = data.get('password')
+    role = data.get('role', 'user')
+    site = data.get('site')
+    group = data.get('group')
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    user = {"username": username, "password": hashed_password}
+    user = {
+        "name": name or username,
+        "username": username,
+        "password": hashed_password,
+        "role": role,
+        "site": site,
+        "group": group,
+    }
     action = insert_user(user)
     if 'error' not in action:
         return {"message": "User succesfully added"}

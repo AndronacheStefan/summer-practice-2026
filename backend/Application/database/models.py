@@ -2,6 +2,7 @@ from bson.objectid import ObjectId
 from mongoengine import *
 
 class User(Document):
+    name = StringField(required=True)
     username = StringField(required=True, unique=True)
     password = StringField(required=True)
     role = StringField(required=True, choices=['admin', 'user'])

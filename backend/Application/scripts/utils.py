@@ -13,12 +13,12 @@ def insert_user(body):
         return {'error': True, 'message': "Exception when trying to insert user"}
 
 
-def ensure_default_dev_user(username='admin', password='testuser'):
+def ensure_default_dev_user(username='admin', password='testuser', name='Dev Admin'):
     existing_user = User.objects(username=username).first()
     if existing_user:
         return False
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    User(username=username, password=hashed_password, role='admin', site='global', group='default').save()
+    User(name=name, username=username, password=hashed_password, role='admin', site='global', group='default').save()
     print(f"Default development user '{username}' created.")
     return True
