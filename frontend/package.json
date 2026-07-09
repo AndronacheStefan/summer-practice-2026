@@ -16,7 +16,8 @@
     "@mui/material": "^9.2.0",
     "material-react-table": "^3.2.1",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "recharts": "^3.9.2"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
