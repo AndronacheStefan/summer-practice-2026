@@ -4,24 +4,38 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogContentText,
     DialogActions,
     Button,
     Container,
-    Typography,
-    Divider,
-    Box,
+    Snackbar,
+    Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
 import AddDeviceForm from "../components/AddDeviceForm";
+import EditDeviceForm from "../components/EditDeviceForm";
+import ScheduleDeviceDialog from "../components/ScheduleDeviceDialog";
 import PageHeader from "../components/PageHeader";
 
 const DeviceTable = () => {
     const [devices, setDevices] = useState([]);
     const [selectedDevice, setSelectedDevice] = useState(null);
-    const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
-    const [selectedAction, setSelectedAction] = useState(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+    const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+    const [isRemoving, setIsRemoving] = useState(false);
+    const [toast, setToast] = useState({ open: false, severity: "success", message: "" });
+
+    const showToast = (severity, message) => {
+        setToast({ open: true, severity, message });
+    };
+
+    const closeToast = (_event, reason) => {
+        if (reason === "clickaway") return;
+        setToast((current) => ({ ...current, open: false }));
+    };
 
     const fetchDevices = async () => {
         try {
@@ -33,6 +47,7 @@ const DeviceTable = () => {
             setDevices(data);
         } catch (error) {
             console.error("Error fetching devices:", error);
+            showToast("error", "Failed to load devices.");
         }
     };
 
@@ -40,32 +55,82 @@ const DeviceTable = () => {
         fetchDevices();
     }, []);
 
-    const handleScheduleOpen = (device) => {
-        setSelectedDevice(device);
-        setIsScheduleDialogOpen(true);
-        setSelectedAction("schedule");
-    };
-
-    const handleScheduleClose = () => {
-        setIsScheduleDialogOpen(false);
-        setSelectedAction(null);
-        setSelectedDevice(null);
-    };
-
     const handleAction = (action, device) => {
+        setSelectedDevice(device);
         switch (action) {
             case "schedule":
-                handleScheduleOpen(device);
+                setIsScheduleDialogOpen(true);
                 break;
             case "edit":
-                // Handle edit action
+                setIsEditDialogOpen(true);
                 break;
             case "remove":
-                // Handle remove action
+                setIsRemoveDialogOpen(true);
                 break;
             default:
                 break;
         }
+    };
+
+    const handleRemoveCancel = () => {
+        if (isRemoving) return;
+        setIsRemoveDialogOpen(false);
+        setSelectedDevice(null);
+    };
+
+    const handleRemoveConfirm = async () => {
+        if (!selectedDevice?.deviceName) return;
+        const target = selectedDevice;
+        setIsRemoving(true);
+        // Optimistic remove
+        const previous = devices;
+        setDevices((current) =>
+            current.filter((d) => d.deviceName !== target.deviceName),
+        );
+        try {
+            const response = await fetch(
+                `/api/device/${encodeURIComponent(target.deviceName)}`,
+                { method: "DELETE" },
+            );
+            if (!response.ok) throw new Error(`Failed to delete device: ${response.status}`);
+            showToast("success", `Removed "${target.deviceName}".`);
+            setIsRemoveDialogOpen(false);
+            setSelectedDevice(null);
+        } catch (error) {
+            console.error("Error removing device:", error);
+            setDevices(previous);
+            showToast("error", `Failed to remove "${target.deviceName}".`);
+        } finally {
+            setIsRemoving(false);
+        }
+    };
+
+    const handleEditClose = () => {
+        setIsEditDialogOpen(false);
+        setSelectedDevice(null);
+    };
+
+    const handleEditSuccess = () => {
+        showToast("success", "Device updated.");
+        fetchDevices();
+    };
+
+    const handleScheduleClose = () => {
+        setIsScheduleDialogOpen(false);
+        setSelectedDevice(null);
+    };
+
+    const handleAddDialogOpen = () => {
+        setIsAddDialogOpen(true);
+    };
+
+    const handleAddDialogClose = () => {
+        setIsAddDialogOpen(false);
+    };
+
+    const handleAddDeviceSuccess = () => {
+        showToast("success", "Device added.");
+        fetchDevices();
     };
 
     const columns = useMemo(
@@ -110,8 +175,8 @@ const DeviceTable = () => {
             <MenuItem
                 key="schedule"
                 onClick={() => {
-                    handleAction("schedule", row.original);
                     closeMenu();
+                    handleAction("schedule", row.original);
                 }}
             >
                 Schedule
@@ -119,8 +184,8 @@ const DeviceTable = () => {
             <MenuItem
                 key="edit"
                 onClick={() => {
-                    handleAction("edit", row.original);
                     closeMenu();
+                    handleAction("edit", row.original);
                 }}
             >
                 Edit
@@ -128,8 +193,8 @@ const DeviceTable = () => {
             <MenuItem
                 key="remove"
                 onClick={() => {
-                    handleAction("remove", row.original);
                     closeMenu();
+                    handleAction("remove", row.original);
                 }}
             >
                 Remove
@@ -137,63 +202,68 @@ const DeviceTable = () => {
         ],
     });
 
-    const handlePerformAction = async () => {
-        if (!selectedDevice) return;
-        try {
-            switch (selectedAction) {
-                case "schedule":
-                    // Perform schedule action with selectedDevice._id
-                    console.log(`Scheduled action for device ${selectedDevice._id}`);
-                    break;
-                case "edit":
-                    // Perform edit action with selectedDevice._id
-                    break;
-                case "remove":
-                    // Perform remove action with selectedDevice._id
-                    break;
-                default:
-                    break;
-            }
-            handleScheduleClose();
-        } catch (error) {
-            console.error("Error performing action:", error);
-        }
-    };
-
-    const handleAddDialogOpen = () => {
-        setIsAddDialogOpen(true);
-    };
-
-    const handleAddDialogClose = () => {
-        setIsAddDialogOpen(false);
-    };
-
-    const handleAddDeviceSuccess = () => {
-        fetchDevices();
-    };
-
     return (
         <Container maxWidth={false} disableGutters>
             <PageHeader title="Devices" breadcrumbItems={["Home", "Devices"]} />
             <MaterialReactTable table={table} />
-            <Dialog open={isScheduleDialogOpen} onClose={handleScheduleClose}>
-                <DialogTitle>Schedule Action</DialogTitle>
+
+            <Dialog open={isRemoveDialogOpen} onClose={handleRemoveCancel} maxWidth="xs" fullWidth>
+                <DialogTitle>Remove device?</DialogTitle>
                 <DialogContent>
-                    {/* Add content for scheduling here */}
-                    Schedule dialog content...
+                    <DialogContentText>
+                        Remove device{" "}
+                        <strong>{selectedDevice?.deviceName ?? ""}</strong>? This can't be undone.
+                    </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleScheduleClose}>Cancel</Button>
-                    <Button onClick={handlePerformAction} color="primary">
-                        Schedule
+                    <Button onClick={handleRemoveCancel} disabled={isRemoving}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleRemoveConfirm}
+                        color="error"
+                        variant="contained"
+                        disabled={isRemoving}
+                    >
+                        {isRemoving ? "Removing..." : "Remove"}
                     </Button>
                 </DialogActions>
             </Dialog>
+
             <AddDeviceForm
                 open={isAddDialogOpen}
                 onClose={handleAddDialogClose}
                 onSuccess={handleAddDeviceSuccess}
             />
+
+            <EditDeviceForm
+                open={isEditDialogOpen}
+                onClose={handleEditClose}
+                onSuccess={handleEditSuccess}
+                device={selectedDevice}
+            />
+
+            <ScheduleDeviceDialog
+                open={isScheduleDialogOpen}
+                onClose={handleScheduleClose}
+                device={selectedDevice}
+            />
+
+            <Snackbar
+                open={toast.open}
+                autoHideDuration={4000}
+                onClose={closeToast}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            >
+                <Alert
+                    onClose={closeToast}
+                    severity={toast.severity}
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    {toast.message}
+                </Alert>
+            </Snackbar>
         </Container>
     );
 };

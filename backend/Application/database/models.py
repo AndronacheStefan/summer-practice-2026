@@ -1,5 +1,22 @@
-from bson.objectid import ObjectId
-from mongoengine import *
+try:
+    # preferred import
+    from bson.objectid import ObjectId  # type: ignore
+except Exception:
+    try:
+        # alternative location
+        from bson import ObjectId  # type: ignore
+    except Exception:
+        # fallback to pymongo's ObjectId if bson isn't available
+        from pymongo import ObjectId  # type: ignore
+from mongoengine import (  # type: ignore[import]
+    Document,
+    EmbeddedDocument,
+    StringField,
+    IntField,
+    FloatField,
+    EmbeddedDocumentListField,
+    ObjectIdField,
+)
 
 class User(Document):
     name = StringField(required=True)
@@ -39,3 +56,9 @@ class DailySaving(EmbeddedDocument):
 class Saving(Document):
     deviceName = StringField(required=True, unique=True)
     log = EmbeddedDocumentListField(DailySaving)
+
+class Schedule(Document):
+    deviceName = StringField(required=True)
+    action = StringField(required=True, choices=['on', 'off'])
+    startTime = StringField(required=True)  # ISO 8601, e.g. "2026-07-14T18:30"
+    recurrence = StringField(required=True, choices=['once', 'daily', 'weekly'], default='once')

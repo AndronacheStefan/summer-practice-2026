@@ -21,3 +21,41 @@ def add_device():
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 400
+
+
+UPDATABLE_DEVICE_FIELDS = {
+    'deviceSlNo', 'deviceType', 'hwType', 'group', 'site', 'owner',
+    'connectivityType', 'ip', 'port', 'loginUser', 'password',
+    'readCommunity', 'writeCommunity', 'powerOnTime', 'powerOffTime',
+    'count', 'consumptionPerHour',
+}
+
+
+@app.route('/device/<device_name>', methods=['PUT'])
+def update_device(device_name):
+    try:
+        device = Device.objects(deviceName=device_name).first()
+        if not device:
+            return jsonify({'error': 'Device not found'}), 404
+        body = request.get_json() or {}
+        for key, value in body.items():
+            if key in UPDATABLE_DEVICE_FIELDS:
+                setattr(device, key, value)
+        device.save()
+        return device.to_json(), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/device/<device_name>', methods=['DELETE'])
+def delete_device(device_name):
+    try:
+        device = Device.objects(deviceName=device_name).first()
+        if not device:
+            return jsonify({'error': 'Device not found'}), 404
+        device.delete()
+        return jsonify({'message': 'Device deleted successfully'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 400
