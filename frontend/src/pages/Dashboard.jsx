@@ -1,4 +1,14 @@
-import { Box, Card, CardContent, Container, Grid, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import {
+    Alert,
+    Box,
+    Card,
+    CardContent,
+    Container,
+    Grid,
+    Skeleton,
+    Typography,
+} from "@mui/material";
 import DevicesIcon from "@mui/icons-material/Devices";
 import BoltIcon from "@mui/icons-material/Bolt";
 import EnergySavingsLeafIcon from "@mui/icons-material/EnergySavingsLeaf";
@@ -6,6 +16,7 @@ import {
     Area,
     AreaChart,
     CartesianGrid,
+    Legend,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -13,44 +24,82 @@ import {
 } from "recharts";
 import PageHeader from "../components/PageHeader";
 
-const weeklyPowerUsage = [
-    { day: "Mon", usage: 42.5, saved: 8.2 },
-    { day: "Tue", usage: 38.1, saved: 9.5 },
-    { day: "Wed", usage: 45.3, saved: 7.8 },
-    { day: "Thu", usage: 41.0, saved: 10.1 },
-    { day: "Fri", usage: 36.7, saved: 11.4 },
-    { day: "Sat", usage: 28.4, saved: 12.6 },
-    { day: "Sun", usage: 25.9, saved: 13.2 },
-];
-
-const stats = [
-    {
-        label: "Registered Devices",
-        value: "24",
-        unit: "devices",
-        icon: <DevicesIcon sx={{ fontSize: 40 }} />,
-        color: "primary.main",
-    },
-    {
-        label: "Total Power Consumption",
-        value: "257.9",
-        unit: "kWh this week",
-        icon: <BoltIcon sx={{ fontSize: 40 }} />,
-        color: "warning.main",
-    },
-    {
-        label: "Energy Saved",
-        value: "72.8",
-        unit: "kWh this week",
-        icon: <EnergySavingsLeafIcon sx={{ fontSize: 40 }} />,
-        color: "success.main",
-    },
-];
+const formatKwh = (n) =>
+    Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 1 }) : "0";
 
 function Dashboard() {
+    const [summary, setSummary] = useState(null);
+    const [weekly, setWeekly] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            try {
+                const [sRes, wRes] = await Promise.all([
+                    fetch("/api/dashboard/summary"),
+                    fetch("/api/dashboard/weekly"),
+                ]);
+                if (!sRes.ok) throw new Error(`summary ${sRes.status}`);
+                if (!wRes.ok) throw new Error(`weekly ${wRes.status}`);
+                const [s, w] = await Promise.all([sRes.json(), wRes.json()]);
+                if (cancelled) return;
+                setSummary(s);
+                setWeekly(w?.days ?? []);
+            } catch (e) {
+                if (cancelled) return;
+                console.error("Failed to load dashboard data", e);
+                setError("Failed to load dashboard data.");
+                setSummary({
+                    registeredDevices: 0,
+                    energySavedThisWeek: 0,
+                    totalConsumptionThisWeek: 0,
+                });
+                setWeekly([]);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const stats = [
+        {
+            label: "Registered Devices",
+            value: summary ? String(summary.registeredDevices ?? 0) : "0",
+            unit: "devices",
+            icon: <DevicesIcon sx={{ fontSize: 40 }} />,
+            color: "primary.main",
+        },
+        {
+            label: "Total Power Consumption",
+            value: summary ? formatKwh(summary.totalConsumptionThisWeek) : "0",
+            unit: "kWh this week",
+            icon: <BoltIcon sx={{ fontSize: 40 }} />,
+            color: "warning.main",
+        },
+        {
+            label: "Energy Saved",
+            value: summary ? formatKwh(summary.energySavedThisWeek) : "0",
+            unit: "kWh this week",
+            icon: <EnergySavingsLeafIcon sx={{ fontSize: 40 }} />,
+            color: "success.main",
+        },
+    ];
+
     return (
         <Container maxWidth={false} disableGutters>
             <PageHeader title="Dashboard" breadcrumbItems={["Home", "Dashboard"]} />
+
+            {error && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                    {error}
+                </Alert>
+            )}
 
             <Grid container spacing={3} sx={{ mt: 1 }}>
                 {stats.map(({ label, value, unit, icon, color }) => (
@@ -58,13 +107,17 @@ function Dashboard() {
                         <Card elevation={2} sx={{ height: "100%" }}>
                             <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                                 <Box sx={{ color }}>{icon}</Box>
-                                <Box>
+                                <Box sx={{ flexGrow: 1 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         {label}
                                     </Typography>
-                                    <Typography variant="h4" component="p">
-                                        {value}
-                                    </Typography>
+                                    {loading ? (
+                                        <Skeleton variant="text" width={80} height={40} />
+                                    ) : (
+                                        <Typography variant="h4" component="p">
+                                            {value}
+                                        </Typography>
+                                    )}
                                     <Typography variant="caption" color="text.secondary">
                                         {unit}
                                     </Typography>
@@ -84,48 +137,66 @@ function Dashboard() {
                         Daily consumption (kWh) across all registered devices
                     </Typography>
                     <Box sx={{ width: "100%", height: 320 }}>
-                        <ResponsiveContainer>
-                            <AreaChart data={weeklyPowerUsage} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#ed6c02" stopOpacity={0.4} />
-                                        <stop offset="95%" stopColor="#ed6c02" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="savedGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#2e7d32" stopOpacity={0.4} />
-                                        <stop offset="95%" stopColor="#2e7d32" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                                <YAxis
-                                    tick={{ fontSize: 12 }}
-                                    label={{ value: "kWh", angle: -90, position: "insideLeft", style: { fontSize: 12 } }}
-                                />
-                                <Tooltip
-                                    formatter={(value, name) => [
-                                        `${value} kWh`,
-                                        name === "usage" ? "Consumption" : "Saved",
-                                    ]}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="usage"
-                                    name="usage"
-                                    stroke="#ed6c02"
-                                    fill="url(#usageGradient)"
-                                    strokeWidth={2}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="saved"
-                                    name="saved"
-                                    stroke="#2e7d32"
-                                    fill="url(#savedGradient)"
-                                    strokeWidth={2}
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {loading ? (
+                            <Skeleton variant="rectangular" width="100%" height={320} />
+                        ) : (
+                            <ResponsiveContainer>
+                                <AreaChart
+                                    data={weekly ?? []}
+                                    margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+                                >
+                                    <defs>
+                                        <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#ed6c02" stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor="#ed6c02" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="savedGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#2e7d32" stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor="#2e7d32" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                                    <XAxis dataKey="weekday" tick={{ fontSize: 12 }} />
+                                    <YAxis
+                                        tick={{ fontSize: 12 }}
+                                        label={{
+                                            value: "kWh",
+                                            angle: -90,
+                                            position: "insideLeft",
+                                            style: { fontSize: 12 },
+                                        }}
+                                    />
+                                    <Tooltip
+                                        formatter={(value, name) => [
+                                            `${Number(value).toLocaleString(undefined, {
+                                                maximumFractionDigits: 1,
+                                            })} kWh`,
+                                            name,
+                                        ]}
+                                        labelFormatter={(label, payload) =>
+                                            payload?.[0]?.payload?.date ?? label
+                                        }
+                                    />
+                                    <Legend />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="consumption"
+                                        name="Consumption"
+                                        stroke="#ed6c02"
+                                        fill="url(#usageGradient)"
+                                        strokeWidth={2}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="energySaved"
+                                        name="Energy Saved"
+                                        stroke="#2e7d32"
+                                        fill="url(#savedGradient)"
+                                        strokeWidth={2}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        )}
                     </Box>
                 </CardContent>
             </Card>

@@ -37,3 +37,4 @@ from .routes.users import app
 from .routes.auth import app
 from .routes.device import app
 from .routes.scheduler import app
+from .routes.dashboard import app
