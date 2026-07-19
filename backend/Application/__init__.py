@@ -6,7 +6,6 @@ import configparser
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
-import time
 from .scripts.toggle import power_off_devices, power_on_devices
 from .scripts.utils import ensure_default_dev_user
 
