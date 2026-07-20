@@ -14,6 +14,7 @@ import {
     TextField,
 } from "@mui/material";
 import DockedDialog from "./DockedDialog";
+import { apiFetch } from "../api";
 
 const EDITABLE_FIELDS = [
     "deviceSlNo",
@@ -74,7 +75,7 @@ const EditDeviceForm = ({ open, onClose, onSuccess, device }) => {
         setError("");
 
         try {
-            const response = await fetch(
+            const response = await apiFetch(
                 `/api/device/${encodeURIComponent(device.deviceName)}`,
                 {
                     method: "PUT",

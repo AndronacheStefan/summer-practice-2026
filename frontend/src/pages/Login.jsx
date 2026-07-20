@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import Card from "@mui/material/Card";
 import CardHeader from "@mui/material/CardHeader";
@@ -15,6 +15,18 @@ function Login() {
     const [password, setPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     let navigate = useNavigate();
+    const location = useLocation();
+
+    // Send the user back to the page they originally requested. The path comes
+    // either from the ProtectedRoute redirect (router state) or from the API
+    // client's 401 redirect (?from= query param); default to /home.
+    const resolveRedirect = () => {
+        const fromParam = new URLSearchParams(location.search).get("from");
+        const fromState = location.state?.from?.pathname;
+        const dest = fromParam || fromState || "/home";
+        if (!dest || dest === "/" || dest.startsWith("/login")) return "/home";
+        return dest;
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -36,7 +48,7 @@ function Login() {
                 sessionStorage.setItem("role", data.role || "");
                 sessionStorage.setItem("group", data.group || "");
                 sessionStorage.setItem("name", data.name || data.loggedinUser || username);
-                navigate("/home");
+                navigate(resolveRedirect(), { replace: true });
             } else {
                 setErrorMessage("Invalid credentials");
             }

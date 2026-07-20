@@ -14,6 +14,7 @@ import {
     TextField,
 } from "@mui/material";
 import DockedDialog from "./DockedDialog";
+import { apiFetch } from "../api";
 
 const initialFormData = {
     deviceName: "",
@@ -63,7 +64,7 @@ const AddDeviceForm = ({ open, onClose, onSuccess }) => {
         setError("");
 
         try {
-            const response = await fetch("/api/device", {
+            const response = await apiFetch("/api/device", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),

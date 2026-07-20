@@ -17,6 +17,7 @@ import AddDeviceForm from "../components/AddDeviceForm";
 import EditDeviceForm from "../components/EditDeviceForm";
 import ScheduleDeviceDialog from "../components/ScheduleDeviceDialog";
 import PageHeader from "../components/PageHeader";
+import { apiFetch } from "../api";
 
 const DeviceTable = () => {
     const [devices, setDevices] = useState([]);
@@ -39,7 +40,7 @@ const DeviceTable = () => {
 
     const fetchDevices = async () => {
         try {
-            const response = await fetch("/api/devices");
+            const response = await apiFetch("/api/devices");
             if (!response.ok) {
                 throw new Error(`Failed to fetch devices: ${response.status}`);
             }
@@ -88,7 +89,7 @@ const DeviceTable = () => {
             current.filter((d) => d.deviceName !== target.deviceName),
         );
         try {
-            const response = await fetch(
+            const response = await apiFetch(
                 `/api/device/${encodeURIComponent(target.deviceName)}`,
                 { method: "DELETE" },
             );

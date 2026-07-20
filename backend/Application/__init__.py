@@ -1,6 +1,6 @@
 
-from flask import Flask
 from .database.db import initialize_db
+from flask import Flask
 from flask_cors import CORS
 import configparser
 import os
@@ -38,3 +38,8 @@ from .routes.device import app
 from .routes.scheduler import app
 from .routes.dashboard import app
 from .routes.analytics import app
+from .routes.profile import app
+
+# Register the global authentication guard LAST — after every route is defined
+# and the JWTManager (set up in routes.auth) is in place.
+from . import security  # noqa: E402,F401

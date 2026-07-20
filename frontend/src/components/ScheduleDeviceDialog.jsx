@@ -22,6 +22,7 @@ import {
     Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { apiFetch } from "../api";
 
 const emptyForm = {
     action: "off",
@@ -58,7 +59,7 @@ const ScheduleDeviceDialog = ({ open, onClose, device }) => {
         setIsLoading(true);
         setError("");
         try {
-            const response = await fetch(
+            const response = await apiFetch(
                 `/api/device/${encodeURIComponent(deviceName)}/schedules`,
             );
             if (!response.ok) throw new Error(`Failed to load schedules: ${response.status}`);
@@ -95,7 +96,7 @@ const ScheduleDeviceDialog = ({ open, onClose, device }) => {
         setIsSubmitting(true);
         setError("");
         try {
-            const response = await fetch(
+            const response = await apiFetch(
                 `/api/device/${encodeURIComponent(deviceName)}/schedules`,
                 {
                     method: "POST",
@@ -120,7 +121,7 @@ const ScheduleDeviceDialog = ({ open, onClose, device }) => {
         const previous = schedules;
         setSchedules((current) => current.filter((s) => formatScheduleId(s) !== scheduleId));
         try {
-            const response = await fetch(`/api/schedule/${encodeURIComponent(scheduleId)}`, {
+            const response = await apiFetch(`/api/schedule/${encodeURIComponent(scheduleId)}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error(`Failed to delete schedule: ${response.status}`);

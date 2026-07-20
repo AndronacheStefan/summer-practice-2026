@@ -21,6 +21,7 @@ import ConsumptionShare from "../components/dashboard/ConsumptionShare";
 import HourlyProfile from "../components/dashboard/HourlyProfile";
 import PowerUsageChart from "../components/dashboard/PowerUsageChart";
 import RangeSelector from "../components/dashboard/RangeSelector";
+import { apiFetch } from "../api";
 
 const RANGE_UNIT = {
     "1h": "kWh this hour",
@@ -39,7 +40,7 @@ const RANGE_SUBTITLE = {
 };
 
 const fetchJson = async (url) => {
-    const res = await fetch(url);
+    const res = await apiFetch(url);
     if (!res.ok) throw new Error(`${url} ${res.status}`);
     return res.json();
 };

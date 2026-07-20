@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
 import PageHeader from "../components/PageHeader";
+import { apiFetch } from "../api";
 
 const ManageUsers = () => {
     const [users, setUsers] = useState([]);
@@ -27,7 +28,7 @@ const ManageUsers = () => {
 
     const fetchData = async () => {
         try {
-            const response = await fetch("/api/users");
+            const response = await apiFetch("/api/users");
             const data = await response.json();
             setUsers(data);
         } catch (error) {
@@ -63,7 +64,7 @@ const ManageUsers = () => {
         e.preventDefault();
 
         try {
-            const response = await fetch("/api/register", {
+            const response = await apiFetch("/api/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
