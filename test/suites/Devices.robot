@@ -10,12 +10,18 @@ Test Setup    Run Keywords
 
 *** Test Cases ***
 Add New Device:
-    Add New Device     AirScale BTS 1    TIM Test Lab    09:30    23:00    2    20
-    Check Device Info  AirScale BTS 1    TIM Test Lab    09:30    23:00    2    20
+    Add New Device     AirScale BTS 1    SL-001    BTS    AirScale    TIM Test Lab    Test Group    Robert    10.0.0.1    22
+    Check Device Info  AirScale BTS 1    SL-001    BTS    AirScale    TIM Test Lab    Test Group    Robert
 
 Edit Device:
-    Click Device Option    AirScale BTS 1    Edit
-    Fail    Test case not implemented yet
+    Add New Device     AirScale BTS 1    SL-001    BTS    AirScale    TIM Test Lab    Test Group    Robert    10.0.0.1    22
+    Edit Device        AirScale BTS 1    group=New Group    owner=Stefan
+    Check Device Info  AirScale BTS 1    SL-001    BTS    AirScale    TIM Test Lab    New Group    Stefan
 
 Remove Device:
-    Fail    Test case not implemented yet
+    Add New Device     AirScale BTS 1    SL-001    BTS    AirScale    TIM Test Lab    Test Group    Robert    10.0.0.1    22
+    Click Device Option    AirScale BTS 1    Remove
+    Click    css=.MuiDialog-root button:has-text("Remove")
+    Wait For Elements State    text=Removed
+    Run Keyword And Expect Error    Row with name 'AirScale BTS 1' not found
+    ...    Check Device Info    AirScale BTS 1    SL-001    BTS    AirScale    TIM Test Lab    Test Group    Robert

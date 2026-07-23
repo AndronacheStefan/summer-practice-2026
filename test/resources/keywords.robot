@@ -35,9 +35,9 @@ Attempt Login
 Check Logged In
     [Documentation]
     ...    Check that the user is logged in (sidebar menu options are visible)
-    Wait For Elements State    a:has-text("Home")
-    Wait For Elements State    a:has-text("Profile")
-    Wait For Elements State    button:has-text("Logout")
+    Wait For Elements State    .MuiListItemButton-root:has-text("Home")       visible
+    Wait For Elements State    .MuiListItemButton-root:has-text("Devices")    visible
+    Wait For Elements State    [aria-label="logout"]                          visible
 
 Load Project and Login
     [Documentation]
@@ -50,45 +50,63 @@ Go To Page
     ...    Navigate to a page available in the sidebar
     [Arguments]
     ...    ${page}
-    
-    Click    a:has-text("${page}")
+
+    Click    .MuiListItemButton-root:has-text("${page}")
 
 Add New Device
     [Documentation]
     ...    Add a new device (must already be on the Devices page)
     [Arguments]
     ...    ${name}
+    ...    ${slNo}
+    ...    ${deviceType}
+    ...    ${hwType}
+    ...    ${site}
     ...    ${group}
-    ...    ${on_time}
-    ...    ${off_time}
-    ...    ${count}
-    ...    ${consumption}
+    ...    ${owner}
+    ...    ${ip}
+    ...    ${port}
+    ...    ${connectivity}=SSH
+    ...    ${loginUser}=admin
+    ...    ${password}=hunter2
     
-    Wait For Elements State    "Add New Device"
-
-    Fill Text    ((//form)[1]//input)[1]    ${name}
-    Fill Text    ((//form)[1]//input)[2]    ${group}
-    Fill Text    ((//form)[1]//input)[3]    ${on_time}
-    Fill Text    ((//form)[1]//input)[4]    ${off_time}
-    Fill Text    ((//form)[1]//input)[5]    ${count}
-    Fill Text    ((//form)[1]//input)[6]    ${consumption}
-
     Click    button:has-text("Add Device")
+    Wait For Elements State    css=#add-device-form    visible
 
-    Wait For Elements State    "Device added successfully!"
+    Fill Text    input[name="deviceName"]    ${name}
+    Fill Text    input[name="deviceSlNo"]    ${slNo}
+    Fill Text    input[name="deviceType"]    ${deviceType}
+    Fill Text    input[name="hwType"]    ${hwType}
+    Fill Text    input[name="site"]    ${site}
+    Fill Text    input[name="group"]    ${group}
+    Fill Text    input[name="owner"]    ${owner}
+    Fill Text    input[name="ip"]    ${ip}
+    Fill Text    input[name="port"]    ${port}
+
+    # Connectivity Type is a MUI Select, not a native input
+    Click    css=#add-device-form [role="combobox"]
+    Click    li:has-text("${connectivity}")
+
+    Fill Text    input[name="loginUser"]    ${loginUser}
+    Fill Text    input[name="password"]    ${password}
+
+    Click    button:has-text("Submit")
+
+    Wait For Elements State    "Device added."
 
 Check Device Info
     [Documentation]
     ...    Check device information for given name in the devices table
     [Arguments]
     ...    ${name}
+    ...    ${slNo}
+    ...    ${deviceType}
+    ...    ${hwType}
+    ...    ${site}
     ...    ${group}
-    ...    ${on_time}
-    ...    ${off_time}
-    ...    ${count}
-    ...    ${consumption}
+    ...    ${owner}
     
-    @{expected_values}    Create List    ${group}    ${on_time}    ${off_time}    ${count}    ${consumption}
+    @{expected_values}    Create List    ${slNo}    ${deviceType}    ${hwType}    ${site}    ${group}    ${owner}
 
     ${rows}=    Get Elements    css=table.MuiTable-root tbody > tr
 
@@ -102,7 +120,7 @@ Check Device Info
 
         IF    '${col_name}' == '${name}'
             ${row_found}=    Set Variable    ${True}
-            FOR    ${i}    IN RANGE    0    5
+            FOR    ${i}    IN RANGE    0    6
                 ${table_index}=    Evaluate                    ${i} + 1
                 ${text}=           Get Text                    ${columns}[${table_index}]
                 Should Be Equal    ${expected_values}[${i}]    ${text}
@@ -118,15 +136,18 @@ Remove All Devices
     [Documentation]
     ...    Removes all devices
 
-    ${rows}=  Get Element Count    css=table.MuiTable-root tbody > tr
-
-    WHILE    ${rows} > 0
-        ${rows}=       Evaluate        ${rows} - 1
+    WHILE    True    limit=100
+        ${actions}=    Get Element Count    css=table.MuiTable-root tbody button
+        IF    ${actions} == 0    BREAK
         
         # Click the button in the last column
         ${button}=    Get Element    css=table.MuiTable-root tbody > tr:last-child >> td:last-child >> button
         Click         ${button}
         Click         li:has-text("Remove")
+
+        # Confirm the deletion dialog and wait for it to close
+        Click    css=.MuiDialog-root button:has-text("Remove")
+        Wait For Elements State    css=.MuiDialog-root    detached
     END
 
 Click Device Option
@@ -172,20 +193,37 @@ Click Device Option by Index
 
 Edit Device
     [Documentation]
-    ...    Edit a given device details
+    ...    Edit a given device's editable details (device name cannot be changed)
     [Arguments]
     ...    ${name}
-    ...    ${newName}=${EMPTY}
     ...    ${group}=${EMPTY}
-    ...    ${on_time}=${EMPTY}
-    ...    ${off_time}=${EMPTY}
-    ...    ${count}=${EMPTY}
-    ...    ${consumption}=${EMPTY}
+    ...    ${owner}=${EMPTY}
+    ...    ${site}=${EMPTY}
+    ...    ${deviceType}=${EMPTY}
+    ...    ${hwType}=${EMPTY}
+    ...    ${slNo}=${EMPTY}
     
     Click Device Option    ${name}    Edit
+    Wait For Elements State    css=#edit-device-form    visible
 
-    IF    "${newName}" != "${EMPTY}"
-        Fill Text    ((//div)[contains(@class, 'MuiDialogContent-root')]//input)[1]    ${newName}
+    IF    "${group}" != "${EMPTY}"
+        Fill Text    input[name="group"]    ${group}
+    END
+    IF    "${owner}" != "${EMPTY}"
+        Fill Text    input[name="owner"]    ${owner}
+    END
+    IF    "${site}" != "${EMPTY}"
+        Fill Text    input[name="site"]    ${site}
+    END
+    IF    "${deviceType}" != "${EMPTY}"
+        Fill Text    input[name="deviceType"]    ${deviceType}
+    END
+    IF    "${hwType}" != "${EMPTY}"
+        Fill Text    input[name="hwType"]    ${hwType}
+    END
+    IF    "${slNo}" != "${EMPTY}"
+        Fill Text    input[name="deviceSlNo"]    ${slNo}
     END
 
-    Click    button:has-text("Update")
+    Click    button:has-text("Save")
+    Wait For Elements State    "Device updated."
