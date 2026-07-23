@@ -3,5 +3,6 @@
     "python.analysis.extraPaths": ["${workspaceFolder}/backend"],
     "python.analysis.diagnosticSeverityOverrides": {
         "reportMissingModuleSource": "none"
-    }
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }

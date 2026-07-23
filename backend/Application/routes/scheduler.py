@@ -7,8 +7,6 @@ except Exception:  # fallback if bson package is unavailable to linters
 try:
     from bson.errors import InvalidId  # type: ignore
 except Exception:
-    # fallback if bson.errors is unavailable to linters or environment
-    # Use a generic Exception as InvalidId so the except InvalidId: blocks still work
     InvalidId = Exception
 from ..database.models import Device, Schedule
 
